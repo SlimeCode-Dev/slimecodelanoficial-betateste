@@ -1,0 +1,152 @@
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LMSProvider, useLMS } from "@/contexts/LMSContext";
+import { SiteContentProvider } from "@/contexts/SiteContentContext";
+import { StoreProvider } from "@/contexts/StoreContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
+
+// Pages
+import Login from "./pages/Login";
+import Landing from "./pages/Landing";
+import Loja from "./pages/Loja";
+import CursoDesenvolvimentoJogos from "./pages/CursoDesenvolvimentoJogos";
+import CursoDesignGrafico from "./pages/CursoDesignGrafico";
+import GaleriaJogos from "./pages/GaleriaJogos";
+import NotFound from "./pages/NotFound";
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
+import AdminTurmas from "./pages/admin/AdminTurmas";
+import AdminFinanceiro from "./pages/admin/AdminFinanceiro";
+import AdminMateriais from "./pages/admin/AdminMateriais";
+import AdminVideos from "./pages/admin/AdminVideos";
+import AdminEntregas from "./pages/admin/AdminEntregas";
+import AdminComunicados from "./pages/admin/AdminComunicados";
+
+// Professor Pages
+import ProfessorDashboard from "./pages/professor/ProfessorDashboard";
+import ProfessorAlunos from "./pages/professor/ProfessorAlunos";
+import ProfessorMateriais from "./pages/professor/ProfessorMateriais";
+import ProfessorVideos from "./pages/professor/ProfessorVideos";
+import ProfessorEntregas from "./pages/professor/ProfessorEntregas";
+import ProfessorChamada from "./pages/professor/ProfessorChamada";
+
+// Aluno Pages
+import AlunoDashboard from "./pages/aluno/AlunoDashboard";
+import AlunoMateriais from "./pages/aluno/AlunoMateriais";
+import AlunoEntregas from "./pages/aluno/AlunoEntregas";
+
+// Vendedor Pages
+import VendedorTempo from "./pages/vendedor/VendedorTempo";
+import VendedorAtivos from "./pages/vendedor/VendedorAtivos";
+import VendedorFinanceiro from "./pages/vendedor/VendedorFinanceiro";
+import VendedorMatriculas from "./pages/vendedor/VendedorMatriculas";
+
+const queryClient = new QueryClient();
+
+function ProtectedRoute({ children, allowedRoles }: { children: React.ReactNode; allowedRoles: string[] }) {
+  const { currentUser, isInitialized } = useLMS();
+
+  // Wait for session restoration before deciding to redirect (prevents reload/flash)
+  if (!isInitialized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" />
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!allowedRoles.includes(currentUser.role)) {
+    return <Navigate to={`/${currentUser.role}`} replace />;
+  }
+  
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  const { currentUser, isInitialized } = useLMS();
+
+  return (
+    <Routes>
+      {/* Landing Page */}
+      <Route path="/" element={<Landing />} />
+
+      {/* Store */}
+      <Route path="/loja" element={<Loja />} />
+
+      {/* Course Detail Pages */}
+      <Route path="/cursos/desenvolvimento-de-jogos" element={<CursoDesenvolvimentoJogos />} />
+      <Route path="/cursos/design-grafico" element={<CursoDesignGrafico />} />
+      <Route path="/galeria-jogos" element={<GaleriaJogos />} />
+
+
+      {/* Login */}
+      <Route
+        path="/login"
+        element={isInitialized && currentUser ? <Navigate to={`/${currentUser.role}`} replace /> : <Login />}
+      />
+
+      {/* Admin Routes */}
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin/comunicados" element={<ProtectedRoute allowedRoles={['admin']}><AdminComunicados /></ProtectedRoute>} />
+      <Route path="/admin/usuarios" element={<ProtectedRoute allowedRoles={['admin']}><AdminUsuarios /></ProtectedRoute>} />
+      <Route path="/admin/turmas" element={<ProtectedRoute allowedRoles={['admin']}><AdminTurmas /></ProtectedRoute>} />
+      <Route path="/admin/materiais" element={<ProtectedRoute allowedRoles={['admin']}><AdminMateriais /></ProtectedRoute>} />
+      <Route path="/admin/videos" element={<ProtectedRoute allowedRoles={['admin']}><AdminVideos /></ProtectedRoute>} />
+      <Route path="/admin/entregas" element={<ProtectedRoute allowedRoles={['admin']}><AdminEntregas /></ProtectedRoute>} />
+      <Route path="/admin/financeiro" element={<ProtectedRoute allowedRoles={['admin']}><AdminFinanceiro /></ProtectedRoute>} />
+
+      {/* Professor Routes */}
+      <Route path="/professor" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorDashboard /></ProtectedRoute>} />
+      <Route path="/professor/alunos" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorAlunos /></ProtectedRoute>} />
+      <Route path="/professor/chamada" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorChamada /></ProtectedRoute>} />
+      <Route path="/professor/materiais" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorMateriais /></ProtectedRoute>} />
+      <Route path="/professor/videos" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorVideos /></ProtectedRoute>} />
+      <Route path="/professor/entregas" element={<ProtectedRoute allowedRoles={['professor']}><ProfessorEntregas /></ProtectedRoute>} />
+
+      {/* Aluno Routes */}
+      <Route path="/aluno" element={<ProtectedRoute allowedRoles={['aluno']}><AlunoDashboard /></ProtectedRoute>} />
+      <Route path="/aluno/materiais" element={<ProtectedRoute allowedRoles={['aluno']}><AlunoMateriais /></ProtectedRoute>} />
+      <Route path="/aluno/entregas" element={<ProtectedRoute allowedRoles={['aluno']}><AlunoEntregas /></ProtectedRoute>} />
+
+      {/* Vendedor Routes (also accessible by admins) */}
+      <Route path="/vendedor" element={<ProtectedRoute allowedRoles={['vendedor', 'admin']}><VendedorTempo /></ProtectedRoute>} />
+      <Route path="/vendedor/ativos" element={<ProtectedRoute allowedRoles={['vendedor', 'admin']}><VendedorAtivos /></ProtectedRoute>} />
+      <Route path="/vendedor/financeiro" element={<ProtectedRoute allowedRoles={['vendedor', 'admin']}><VendedorFinanceiro /></ProtectedRoute>} />
+      <Route path="/vendedor/matriculas" element={<ProtectedRoute allowedRoles={['vendedor', 'admin']}><VendedorMatriculas /></ProtectedRoute>} />
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <LMSProvider>
+        <ThemeProvider>
+          <SiteContentProvider>
+            <StoreProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </StoreProvider>
+          </SiteContentProvider>
+        </ThemeProvider>
+      </LMSProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
